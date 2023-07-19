@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.core.mail import send_mail
 
 
@@ -11,3 +13,7 @@ def send_letter(email, confirmation_code):
         (email,),
         False,
     )
+
+
+def get_current_year():
+    return datetime.now().year

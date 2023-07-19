@@ -1,60 +1,57 @@
-import datetime
-
 from django.db import models
-from django.conf import settings
 from django.core.validators import (MaxValueValidator,
                                     RegexValidator,
                                     MinValueValidator)
 
+from api.consts import (TEXT_LENGTH,
+                        TITLES_NAMES_LENGTH,
+                        USERNAME_SLUG_SHOW_LENGTH)
+from api.utils import get_current_year
 
-class Category(models.Model):
+
+class CategoryGenreModel(models.Model):
+    """Абстрактный класс для категорий и жанров."""
+
+    name = models.CharField(max_length=TITLES_NAMES_LENGTH,
+                            verbose_name='Название')
+    slug = models.SlugField(max_length=USERNAME_SLUG_SHOW_LENGTH,
+                            unique=True,
+                            verbose_name='Слаг', )
+
+    class Meta:
+        abstract = True
+        ordering = ('name',)
+
+    def __str__(self):
+        return self.name[:TEXT_LENGTH]
+
+
+class Category(CategoryGenreModel):
     """Класс категорий произведений."""
 
-    name = models.CharField(max_length=256,
-                            verbose_name='Название категории')
-    slug = models.CharField(max_length=50,
-                            unique=True,
-                            verbose_name='Слаг категории',
-                            validators=(RegexValidator('^[-a-zA-Z0-9_]+$',),))
-
-    class Meta:
-        verbose_name = 'Категория произведения'
-        verbose_name_plural = 'Категории произведений'
-        ordering = ('name',)
-
-    def __str__(self):
-        return self.name[:settings.TEXT_LENGTH]
+    class Meta(CategoryGenreModel.Meta):
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
 
 
-class Genre(models.Model):
+class Genre(CategoryGenreModel):
     """Класс жанров произведений."""
 
-    name = models.CharField(max_length=256,
-                            verbose_name='Название жанра')
-    slug = models.CharField(max_length=50,
-                            unique=True,
-                            verbose_name='Слаг жанра',
-                            validators=(RegexValidator('^[-a-zA-Z0-9_]+$',),))
-
-    class Meta:
-        verbose_name = 'Жанр произведения'
-        verbose_name_plural = 'Жанры произведений'
-        ordering = ('name',)
-
-    def __str__(self):
-        return self.name[:settings.TEXT_LENGTH]
+    class Meta(CategoryGenreModel.Meta):
+        verbose_name = 'Жанр'
+        verbose_name_plural = 'Жанры'
 
 
-class Title(models.Model):
+class Title(CategoryGenreModel):
     """Класс произведений."""
 
-    name = models.CharField(max_length=256,
+    name = models.CharField(max_length=TITLES_NAMES_LENGTH,
                             verbose_name='Название произведения')
-    year = models.IntegerField(
+    year = models.SmallIntegerField(
+        db_index=True,
         verbose_name='Год выпуска',
         validators=(
-            MinValueValidator(0),
-            MaxValueValidator(datetime.datetime.now().year),
+            MaxValueValidator(get_current_year, 'Будущее?'),
         )
     )
     description = models.TextField(
@@ -80,7 +77,7 @@ class Title(models.Model):
         ordering = ('-year',)
 
     def __str__(self):
-        return self.name[:settings.TEXT_LENGTH]
+        return self.name[:TEXT_LENGTH]
 
 
 class GenreTitle(models.Model):
@@ -100,7 +97,6 @@ class GenreTitle(models.Model):
     class Meta:
         verbose_name = 'Связь жанра и произведения'
         verbose_name_plural = 'Связи жанров и произведений'
-        ordering = ('id',)
 
     def __str__(self):
         return f'{self.title} относится к жанру {self.genre}'

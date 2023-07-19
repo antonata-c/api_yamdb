@@ -1,10 +1,8 @@
-from django.contrib.auth import get_user_model
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 from titles.models import Title
-
-User = get_user_model()
+from users.models import User
 
 
 class BaseReviewCommentModel(models.Model):
@@ -40,7 +38,7 @@ class Review(BaseReviewCommentModel):
         ]
     )
 
-    class Meta:
+    class Meta(BaseReviewCommentModel.Meta):
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
         constraints = [
@@ -62,7 +60,7 @@ class Comment(BaseReviewCommentModel):
         related_name='comments'
     )
 
-    class Meta:
+    class Meta(BaseReviewCommentModel.Meta):
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
 

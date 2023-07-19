@@ -11,9 +11,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-TEXT_LENGTH = 10
-USERNAME_LENGTH = 50
-
 # Application definition
 
 INSTALLED_APPS = [
