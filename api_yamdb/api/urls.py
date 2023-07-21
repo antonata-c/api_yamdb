@@ -3,7 +3,7 @@ from rest_framework import routers
 
 from .views import (TitleViewSet, CategoryViewSet,
                     GenreViewSet, UserViewSet,
-                    SignUpViewSet, TokenViewSet,
+                    signup, token,
                     ReviewViewSet, CommentViewSet)
 
 router_v1 = routers.DefaultRouter()
@@ -16,10 +16,14 @@ router_v1.register(r'titles/(?P<title_id>\d+)/reviews',
 router_v1.register(r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)'
                    r'/comments', CommentViewSet, basename='comments')
 
-urlpatterns = [
-    path('v1/auth/token/', TokenViewSet.as_view({'post': 'create'}),
+auth_urls = [
+    path('token/', token,
          name='token'),
-    path('v1/auth/signup/', SignUpViewSet.as_view({'post': 'create'}),
+    path('signup/', signup,
          name='signup'),
+]
+
+urlpatterns = [
+    path('v1/auth/', include(auth_urls)),
     path('v1/', include(router_v1.urls)),
 ]

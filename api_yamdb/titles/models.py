@@ -51,7 +51,8 @@ class Title(CategoryGenreModel):
         db_index=True,
         verbose_name='Год выпуска',
         validators=(
-            MaxValueValidator(get_current_year, 'Будущее?'),
+            MaxValueValidator(get_current_year, 'В будущем произведения'
+                                                ' неизвестны.'),
         )
     )
     description = models.TextField(
