@@ -42,7 +42,7 @@ class Genre(CategoryGenreModel):
         verbose_name_plural = 'Жанры'
 
 
-class Title(CategoryGenreModel):
+class Title(models.Model):
     """Класс произведений."""
 
     name = models.CharField(max_length=TITLES_NAMES_LENGTH,

@@ -4,7 +4,7 @@ from django.db.models import Avg
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, mixins, viewsets, permissions
+from rest_framework import filters, viewsets, permissions
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
@@ -16,7 +16,6 @@ from .serializers import (TitleSerializer, CategorySerializer,
                           GenreSerializer, TitleCreateSerializer,
                           SignUpSerializer, TokenSerializer,
                           UserSerializer, CommentSerializer, ReviewSerializer)
-from .utils import send_letter
 from titles.models import Title, Category, Genre
 from users.models import User
 from reviews.models import Review
@@ -64,6 +63,7 @@ class UserViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
     http_method_names = ('get', 'post', 'patch', 'delete')
+    lookup_field = "username"
 
     @action(
         detail=False,
@@ -81,35 +81,6 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save(role=request.user.role)
         return Response(serializer.data, status=HTTPStatus.OK)
-
-
-@api_view(["POST"])
-def signup(request):
-    serializer = SignUpSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    found_user, created = User.objects.get_or_create(
-        **serializer.validated_data
-    )
-    confirmation_code = default_token_generator.make_token(found_user)
-
-    send_letter(found_user.email, confirmation_code)
-    return Response(serializer.validated_data, status=HTTPStatus.OK)
-
-
-@api_view(["POST"])
-def token(request):
-    serializer = TokenSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    user = get_object_or_404(User, username=request.data.get('username'))
-    if not default_token_generator.check_token(
-            user, request.data.get('confirmation_code')
-    ):
-        return Response({'confirmation_code': 'Введеный токен неверен!'},
-                        status=HTTPStatus.BAD_REQUEST)
-    return Response(
-        {'token': str(AccessToken.for_user(user))},
-        status=HTTPStatus.OK
-    )
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -150,3 +121,27 @@ class CommentViewSet(viewsets.ModelViewSet):
     def get_review(self):
         """Метод для получения объекта Review."""
         return get_object_or_404(Review, id=self.kwargs.get('review_id'))
+
+
+@api_view(["POST"])
+def signup(request):
+    serializer = SignUpSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(serializer.validated_data, status=HTTPStatus.OK)
+
+
+@api_view(["POST"])
+def token(request):
+    serializer = TokenSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    user = get_object_or_404(User, username=request.data.get('username'))
+    if not default_token_generator.check_token(
+            user, request.data.get('confirmation_code')
+    ):
+        return Response({'confirmation_code': 'Введеный токен неверен!'},
+                        status=HTTPStatus.BAD_REQUEST)
+    return Response(
+        {'token': str(AccessToken.for_user(user))},
+        status=HTTPStatus.OK
+    )

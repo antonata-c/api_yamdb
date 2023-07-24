@@ -1,9 +1,10 @@
+from django.contrib.auth.tokens import default_token_generator
 from django.core.validators import MaxValueValidator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from .consts import NAME_LENGTH, USERNAME_SLUG_SHOW_LENGTH, EMAIL_LENGTH
-from .utils import get_current_year
+from .utils import get_current_year, send_letter
 from .validators import username_validator
 from titles.models import Title, Category, Genre
 from reviews.models import Review, Comment
@@ -84,15 +85,6 @@ class UserSerializer(serializers.ModelSerializer):
                   'bio', 'role')
         model = User
 
-    def validate(self, data):
-        if (User.objects.filter(username=data.get('username'))
-                and not User.objects.filter(email=data.get('email'))):
-            raise serializers.ValidationError('Имя пользователя уже занято!')
-        if (User.objects.filter(email=data.get('email'))
-                and not User.objects.filter(username=data.get('username'))):
-            raise serializers.ValidationError('Email уже занят!')
-        return data
-
     def validate_username(self, username):
         return username_validator(username)
 
@@ -121,6 +113,24 @@ class SignUpSerializer(serializers.Serializer):
     )
     email = serializers.EmailField(max_length=EMAIL_LENGTH, required=True)
 
+    def create(self, validated_data):
+        found_user, created = User.objects.get_or_create(
+            **validated_data
+        )
+        confirmation_code = default_token_generator.make_token(found_user)
+
+        send_letter(found_user.email, confirmation_code)
+        return found_user
+
+    def validate(self, data):
+        if (User.objects.filter(username=data.get('username'))
+                and not User.objects.filter(email=data.get('email'))):
+            raise serializers.ValidationError('Имя пользователя уже занято!')
+        if (User.objects.filter(email=data.get('email'))
+                and not User.objects.filter(username=data.get('username'))):
+            raise serializers.ValidationError('Email уже занят!')
+        return data
+
 
 class ReviewSerializer(serializers.ModelSerializer):
     """Сериализатор отзывов."""
@@ -135,10 +145,9 @@ class ReviewSerializer(serializers.ModelSerializer):
         """Валидация на повторные отзывы."""
         request = self.context.get('request')
         if request.method == 'POST':
-            author = request.user
             title_id = self.context.get('view').kwargs.get('title_id')
             if Review.objects.filter(title=title_id,
-                                     author=author).exists():
+                                     author=request.user).exists():
                 raise ValidationError('Вы не можете добавить более одного '
                                       'отзыва на произведение')
         return data
@@ -146,6 +155,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = '__all__'
+        read_only_fields = ('title',)
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -159,3 +169,4 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = '__all__'
+        read_only_fields = ('review',)
