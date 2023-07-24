@@ -1,7 +1,5 @@
 from django.db import models
-from django.core.validators import (MaxValueValidator,
-                                    RegexValidator,
-                                    MinValueValidator)
+from django.core.validators import MaxValueValidator
 
 from api.consts import (TEXT_LENGTH,
                         TITLES_NAMES_LENGTH,
