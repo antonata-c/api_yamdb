@@ -4,10 +4,10 @@ from django.core.validators import MaxValueValidator
 from api.consts import (TEXT_LENGTH,
                         TITLES_NAMES_LENGTH,
                         USERNAME_SLUG_SHOW_LENGTH)
-from api.utils import get_current_year
+from api.validators import get_current_year
 
 
-class CategoryGenreModel(models.Model):
+class NameSlugModel(models.Model):
     """Абстрактный класс для категорий и жанров."""
 
     name = models.CharField(max_length=TITLES_NAMES_LENGTH,
@@ -24,18 +24,18 @@ class CategoryGenreModel(models.Model):
         return self.name[:TEXT_LENGTH]
 
 
-class Category(CategoryGenreModel):
+class Category(NameSlugModel):
     """Класс категорий произведений."""
 
-    class Meta(CategoryGenreModel.Meta):
+    class Meta(NameSlugModel.Meta):
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
 
 
-class Genre(CategoryGenreModel):
+class Genre(NameSlugModel):
     """Класс жанров произведений."""
 
-    class Meta(CategoryGenreModel.Meta):
+    class Meta(NameSlugModel.Meta):
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
 

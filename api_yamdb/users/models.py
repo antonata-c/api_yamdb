@@ -32,7 +32,7 @@ class User(AbstractUser):
         blank=False,
         choices=ROLES,
         default=USER,
-        max_length=max(len(role[0]) for role in ROLES)
+        max_length=max(len(role) for role, _ in ROLES)
     )
 
     class Meta:
@@ -43,8 +43,10 @@ class User(AbstractUser):
     def __str__(self):
         return self.username[:USERNAME_SLUG_SHOW_LENGTH]
 
+    @property
     def is_moderator(self):
         return self.role == self.MODERATOR
 
+    @property
     def is_admin(self):
         return self.role == self.ADMIN or self.is_staff or self.is_superuser

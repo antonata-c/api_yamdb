@@ -20,6 +20,8 @@ from titles.models import Title, Category, Genre
 from users.models import User
 from reviews.models import Review
 
+from .utils import send_letter
+
 
 class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет для произведений."""
@@ -29,7 +31,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = (ReadOnly | IsAdmin,)
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     ordering_fields = ('name', 'year', 'rating')
-    ordering = ['name']
+    ordering = ('name',)
     filterset_class = TitleFilter
     http_method_names = ('get', 'post', 'patch', 'delete')
 
@@ -127,7 +129,11 @@ class CommentViewSet(viewsets.ModelViewSet):
 def signup(request):
     serializer = SignUpSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    serializer.save()
+    user_data = serializer.save()
+    if isinstance(user_data, dict):
+        user_data = get_object_or_404(User, **user_data)
+    confirmation_code = default_token_generator.make_token(user_data)
+    send_letter(user_data.email, confirmation_code)
     return Response(serializer.validated_data, status=HTTPStatus.OK)
 
 

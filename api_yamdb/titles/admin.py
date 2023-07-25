@@ -12,7 +12,7 @@ class TitleAdmin(admin.ModelAdmin):
 
     @admin.display(description='Жанр')
     def get_genres(self, obj):
-        return ", ".join([str(p) for p in obj.genre.all()])
+        return ', '.join([str(genre) for genre in obj.genre.all()])
 
 
 @admin.register(Category)

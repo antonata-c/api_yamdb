@@ -1,11 +1,10 @@
-from django.contrib.auth.tokens import default_token_generator
 from django.core.validators import MaxValueValidator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from rest_framework.validators import UniqueTogetherValidator
 
 from .consts import NAME_LENGTH, USERNAME_SLUG_SHOW_LENGTH, EMAIL_LENGTH
-from .utils import get_current_year, send_letter
-from .validators import username_validator
+from .validators import username_validator, get_current_year
 from titles.models import Title, Category, Genre
 from reviews.models import Review, Comment
 from users.models import User
@@ -84,6 +83,12 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('username', 'email', 'first_name', 'last_name',
                   'bio', 'role')
         model = User
+        validators = (
+            UniqueTogetherValidator(
+                queryset=User.objects.all(),
+                fields=['username', 'email']
+            ),
+        )
 
     def validate_username(self, username):
         return username_validator(username)
@@ -117,18 +122,18 @@ class SignUpSerializer(serializers.Serializer):
         found_user, created = User.objects.get_or_create(
             **validated_data
         )
-        confirmation_code = default_token_generator.make_token(found_user)
-
-        send_letter(found_user.email, confirmation_code)
+        if not created:
+            return validated_data
         return found_user
 
     def validate(self, data):
-        if (User.objects.filter(username=data.get('username'))
-                and not User.objects.filter(email=data.get('email'))):
-            raise serializers.ValidationError('Имя пользователя уже занято!')
-        if (User.objects.filter(email=data.get('email'))
-                and not User.objects.filter(username=data.get('username'))):
-            raise serializers.ValidationError('Email уже занят!')
+        if not all((User.objects.filter(username=data.get('username')),
+                    User.objects.filter(email=data.get('email')))):
+            if User.objects.filter(username=data.get('username')):
+                raise serializers.ValidationError(
+                    'Имя пользователя уже занято!')
+            if User.objects.filter(email=data.get('email')):
+                raise serializers.ValidationError('Email уже занят!')
         return data
 
 
