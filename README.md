@@ -1,12 +1,14 @@
-# Описание:
+# api_YaMDB
+
+## Описание:
 Проект YaMDb собирает отзывы пользователей на произведения. 
 Сами произведения в YaMDb не хранятся, здесь нельзя посмотреть фильм или послушать музыку.
 ### Стек используемых технологий:
-- [Python 3.8](https://python.org)
-- [Django](https://www.djangoproject.com/)
-- [Django REST Framework](https://www.django-rest-framework.org/)
-- [SQLite3](https://docs.python.org/3/library/sqlite3.html)
-- [Simple JWT](https://django-rest-framework-simplejwt.readthedocs.io/en/latest/)
+- `Python 3.8`
+- `Django`
+- `Django REST Framework`
+- `SQLite3`
+- `Simple JWT`
 ***
 # Как запустить проект:
 ##### Для Windows:
